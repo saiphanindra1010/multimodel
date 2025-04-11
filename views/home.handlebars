@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Multi-Agent Chatbot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom scrollbar */
+    #chat-box::-webkit-scrollbar {
+      width: 6px;
+    }
+    #chat-box::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.4);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-100 to-white h-screen w-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-indigo-600 text-white py-4 px-6 shadow-md">
+    <h1 class="text-2xl font-bold">🏠 Multi-Agent Real Estate Chatbot</h1>
+    <p class="text-sm opacity-90">Ask anything about properties, listings, and more!</p>
+  </header>
+
+  <!-- Chat area -->
+  <main class="flex-1 overflow-hidden flex flex-col">
+    <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
+      <!-- Chat messages appear here -->
+    </div>
+
+    <!-- Input form -->
+    <form id="chat-form" enctype="multipart/form-data" class="p-4 bg-gray-50 border-t border-gray-200 space-y-3">
+      <div class="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-3 md:space-y-0">
+        <input type="text" id="message" name="message" required
+               placeholder="Type your message..."
+               class="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"/>
+
+        <input type="file" id="image" name="image" accept="image/*"
+               class="text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 transition cursor-pointer"/>
+
+        <button type="submit"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-md transition shadow">
+          Send
+        </button>
+      </div>
+    </form>
+  </main>
+
+  <script>
+    const chatBox = document.getElementById('chat-box');
+
+    function scrollToBottom() {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    document.getElementById('chat-form').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const formData = new FormData(this);
+
+      // User message
+      const userMessage = document.createElement('div');
+      userMessage.className = 'text-right';
+      userMessage.innerHTML = `
+        <div class="inline-block bg-indigo-100 text-indigo-800 px-4 py-2 rounded-lg max-w-xs break-words">
+          ${formData.get('message')}
+        </div>`;
+      chatBox.appendChild(userMessage);
+      scrollToBottom();
+
+      try {
+        const response = await fetch('/chat', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        // Bot message
+        const botMessage = document.createElement('div');
+        botMessage.className = 'text-left';
+        botMessage.innerHTML = `
+          <div class="inline-block bg-green-100 text-green-800 px-4 py-2 rounded-lg max-w-xs break-words">
+            ${typeof data.response === 'string' ? data.response : JSON.stringify(data.response, null, 2)}
+          </div>
+          
+          <h1>${data.agent}</h1>`;
+        chatBox.appendChild(botMessage);
+        scrollToBottom();
+      } catch (error) {
+        console.error('Error:', error);
+      }
+
+      this.reset();
+    });
+  </script>
+
+</body>
+</html>
